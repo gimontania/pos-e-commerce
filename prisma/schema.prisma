@@ -1,0 +1,274 @@
+//generador de prisma client
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+//conexión a postgresql, la url se configura en prisma7.config.ts
+datasource db {
+  provider = "postgresql"
+}
+
+//enums
+//metodos de pago disponibles en las ventas pos
+enum PaymentMethod {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA_QR
+}
+
+//estados posibles de un pedido
+enum OrderStatus {
+  PENDIENTE
+  PAGADO
+  EN_CAMINO
+  ENTREGADO
+  CANCELADO
+}
+
+//desde dónde salió el pedido
+enum OrderSource {
+  WEB
+  FACEBOOK
+  INSTAGRAM
+  MANUAL
+}
+
+//estado de una sesión de caja
+enum CashRegisterStatus {
+  ABIERTA
+  CERRADA
+}
+
+//1) ROLE
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  //un rol puede pertenecer a muchos usuarios
+  users User[]
+}
+
+//2) USER
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  roleId       Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  //relacion con Role
+  role Role @relation(fields: [roleId], references: [id])
+
+  //un usuario puede ser opcionalmente un cliente web
+  customer Customer?
+
+  //ventas realizadas por este usuario
+  sales Sale[]
+
+  //sesiones de caja abiertas para este usuario
+  cashRegisters CashRegister[]
+}
+
+//3) CUSTOMER
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  phone     String
+  userId    Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //relación 1:1 con User
+  user User @relation(fields: [userId], references: [id])
+
+  //direcciones guardadas del cliente
+  addresses Address[]
+
+  //carrito activo del cliente
+  cart Cart?
+
+  //pedidos realizados por el cliente
+  orders Order[]
+}
+
+//4) ADDRESS
+model Address {
+  id         Int      @id @default(autoincrement())
+  street     String
+  city       String
+  province   String
+  postalCode String
+  reference  String?
+  customerId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  //cada dirección pertenece a un cliente
+  customer Customer @relation(fields: [customerId], references: [id])
+}
+
+//5) CATEGORY
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //una categoria puede tener muchos productos
+  products Product[]
+}
+
+//6) PRODUCT
+model Product {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  purchasePrice Decimal
+  salePrice     Decimal
+  stock         Int
+  categoryId    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  //cada producto pertenece a una categoria
+  category Category @relation(fields: [categoryId], references: [id])
+
+  //historial de productos vendidos en POS
+  saleItems SaleItem[]
+
+  //productos dentro de carritos
+  cartItems CartItem[]
+
+  //productos incluidos en pedidos
+  orderItems OrderItem[]
+}
+
+//7) SALE
+model Sale {
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  cashRegisterId Int
+  paymentMethod  PaymentMethod
+  total          Decimal
+  createdAt      DateTime      @default(now())
+
+  //usuario que realizó la venta
+  user User @relation(fields: [userId], references: [id])
+
+  //caja donde se realizó la venta
+  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id])
+
+  //productos incluidos en la venta
+  items SaleItem[]
+}
+
+//8) SALE ITEM
+model SaleItem {
+  id        Int     @id @default(autoincrement())
+  saleId    Int
+  productId Int
+  quantity  Int
+  unitPrice Decimal
+
+  //venta a la que pertenece
+  sale Sale @relation(fields: [saleId], references: [id])
+
+  //producto vendido
+  product Product @relation(fields: [productId], references: [id])
+}
+
+//9) CART
+model Cart {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  //cada cliente tiene como máximo un carrito activo
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  //productos del carrito
+  items CartItem[]
+}
+
+//10) CART ITEM
+model CartItem {
+  id        Int @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int
+
+  //carrito al que pertenece
+  cart Cart @relation(fields: [cartId], references: [id])
+
+  //producto agregado al carrito
+  product Product @relation(fields: [productId], references: [id])
+
+  //evita tener el mismo producto repetido en un carrito
+  @@unique([cartId, productId])
+}
+
+//11) ORDER
+model Order {
+  id         Int         @id @default(autoincrement())
+  customerId Int
+  status     OrderStatus @default(PENDIENTE)
+  source     OrderSource
+  total      Decimal
+
+  //referencia del envío/delivey
+  deliveryReference String?
+
+  //snapshot de la dirección guardada en este pedido, se usa para guardar el historial, aunque el cliente cambie de dirección posteriormente
+  shippingName       String
+  shippingPhone      String
+  shippingAddress    String
+  shippingCity       String
+  shippingProvince   String
+  shippingPostalCode String
+  shippingReference  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //cliente que realizó el pedido
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  //productos incluidos en el pedido
+  items OrderItem[]
+}
+
+//12) ORDER ITEM
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  unitPrice Decimal
+
+  //pedido al que pertenece
+  order Order @relation(fields: [orderId], references: [id])
+
+  //producto comprado
+  product Product @relation(fields: [productId], references: [id])
+}
+
+//13) CASH REGISTER
+model CashRegister {
+  id            Int                @id @default(autoincrement())
+  userId        Int
+  openingAmount Decimal
+  closingAmount Decimal?
+  status        CashRegisterStatus @default(ABIERTA)
+  openedAt      DateTime           @default(now())
+  closedAt      DateTime?
+
+  //usuario responsable de esta sesión de caja
+  user User @relation(fields: [userId], references: [id])
+
+  //ventas realizadas durante esta sesión
+  sales Sale[]
+}
