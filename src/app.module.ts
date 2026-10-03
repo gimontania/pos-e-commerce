@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
+import { SalesModule } from './sales/sales.module';
 
 
 @Module({ //carga las variables del archivo .env y permite usarlas desde toda la aplicación
@@ -23,9 +24,16 @@ import { ProductsModule } from './products/products.module';
 
     CategoriesModule,
 
-    ProductsModule, //módulo de autenticación
+    ProductsModule,
+
+    SalesModule, //módulo de autenticación
   ],  
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+
+
+
+
+
