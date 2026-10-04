@@ -8,6 +8,9 @@ import { UsersModule } from './users/users.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { SalesModule } from './sales/sales.module';
+import { CustomersModule } from './customers/customers.module';
+import { CartModule } from './cart/cart.module';
+import { OrdersModule } from './orders/orders.module';
 
 
 @Module({ //carga las variables del archivo .env y permite usarlas desde toda la aplicación
@@ -26,7 +29,13 @@ import { SalesModule } from './sales/sales.module';
 
     ProductsModule,
 
-    SalesModule, //módulo de autenticación
+    SalesModule,
+
+    CustomersModule,
+
+    CartModule,
+
+    OrdersModule, //módulo de autenticación
   ],  
   controllers: [AppController],
   providers: [AppService],
