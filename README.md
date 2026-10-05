@@ -1,3 +1,5 @@
+//readMe hecho con ayuda
+
 POS & E-commerce
 
 Sistema híbrido de Punto de Venta (POS) y Comercio Electrónico desarrollado con NestJS, TypeScript, Prisma y PostgreSQL.
