@@ -207,6 +207,75 @@ export class SalesService {
         });
     }
 
+    async cerrarCaja(userId: number, closingAmount: number) {
+        //el efectivo contado no puede ser negativo
+        if (closingAmount < 0) {
+            throw new BadRequestException(
+                'El monto de cierre no puede ser negativo',
+            );
+        }
+
+        //buscamos la caja abierta del usuario
+        const caja = await this.prisma.cashRegister.findFirst({
+            where: {
+                userId,
+                status: 'ABIERTA',
+            },            
+        });
+
+        //si no existe la caja abierta, no podemos cerrarla
+        if (!caja) {
+            throw new BadRequestException(
+                'El usuario no tiene una caja abierta',
+            );
+        }
+
+        //sumamos solamente las ventas pagadas en efectivo
+        const ventasEfectivo = await this.prisma.sale.aggregate({
+            where: {
+                cashRegisterId: caja.id,
+                paymentMethod: 'EFECTIVO',
+            },
+            _sum: {
+                total: true,
+            },
+        });
+
+        //obtenemos el total vendido en efectivo
+        const totalEfectivo = Number(ventasEfectivo._sum.total ?? 0);
+
+        //calculamos cuánto dinero debería haber físicamente
+        const efectivoEsperado = Number(caja.openingAmount) + totalEfectivo;
+
+        //calculamos la diferencia entre lo esperado y lo contado
+        const diferencia = closingAmount - efectivoEsperado;
+
+        //cerramos la caja y guardamos el monto contado
+        const cajaCerrada = await this.prisma.cashRegister.update({
+            where: {
+                id: caja.id,
+            },
+            data: {
+                closingAmount,
+                status: 'CERRADA',
+                closedAt: new Date(),
+            },
+        });
+
+        //devolvemos la información de la conciliación
+        return {
+            caja: cajaCerrada,
+            resumen: {
+                montoInicial: Number(caja.openingAmount),
+                ventasEfectivo: totalEfectivo,
+                efectivoEsperado,
+                efectivoContado: closingAmount,
+                diferencia,
+            },
+        };
+
+    }
+
     //obtenemos el historial de ventas
     async obtenerVentas() {
         return this.prisma.sale.findMany({

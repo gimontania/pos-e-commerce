@@ -54,6 +54,27 @@ export class SalesController {
         );
     }
 
+    @Post('caja/cerrar')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN', 'CAJERO')
+    async cerrarCaja(
+        @Body() body: { closingAmount: number },
+        @Req() req: any,
+    ) {
+        //el usuario sale del jwt
+        const userId = req.user.sub;
+
+        //cerramos la caja y conciliamos el efectivo
+        return this.salesService.cerrarCaja(
+            userId,
+            body.closingAmount,
+        );
+    }
+
+
+
+
+
 
 }
 
