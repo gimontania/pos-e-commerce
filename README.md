@@ -54,32 +54,10 @@ Local:
 
 http://localhost:3000/api/docs
 
-Producción:
-
-[COMPLETAR CON URL DE RENDER]/api/docs
-
-Credenciales de prueba
-
-ADMIN
-
-Email: [COMPLETAR]
-Password: [COMPLETAR]
-
-CAJERO
-
-Email: [COMPLETAR]
-Password: [COMPLETAR]
-
-CLIENTE
-
-Email: [COMPLETAR]
-Password: [COMPLETAR]
-
 Producción
 
 API en Render:
 
-[COMPLETAR CON URL DE RENDER]
 
 Base de datos: Supabase PostgreSQL.
 
