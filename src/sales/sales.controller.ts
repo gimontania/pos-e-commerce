@@ -4,7 +4,7 @@ import { CreateSaleDto } from "./dto/create-sale.dto/create-sale.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";  
-import { ApiBearerAuth, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse } from "@nestjs/swagger";
 
 
 
@@ -93,7 +93,21 @@ export class SalesController {
         status: 403,
         description: 'El usuario no tiene permisos suficientes',
     })
+    @ApiBody({
+    schema: {
+        type: 'object',
+        properties: {
+            openingAmount: {
+                type: 'number',
+                example: 10000,
+                description: 'Monto inicial disponible en la caja',
+            },
+        },
+        required: ['openingAmount'],
+    },
+    })
     async abrirCaja(
+
         @Body() body: { openingAmount: number },
         @Req() req: any,
     ) {
@@ -127,7 +141,21 @@ export class SalesController {
         status: 403,
         description: 'El usuario no tiene permisos suficientes',
     })
+    @ApiBody({
+    schema: {
+        type: 'object',
+        properties: {
+            closingAmount: {
+                type: 'number',
+                example: 10000,
+                description: 'Monto de efectivo contado al cerrar la caja',
+            },
+        },
+        required: ['closingAmount'],
+    },
+    })
     async cerrarCaja(
+
         @Body() body: { closingAmount: number },
         @Req() req: any,
     ) {
@@ -141,14 +169,6 @@ export class SalesController {
         );
     }
 }
-
-
-
-
-
-
-
-
 
 
 
