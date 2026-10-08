@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { SalesService } from './sales.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SalesController } from './sales.controller';
+import { PaymentsModule } from '../payments/payments.module';
 
 
 @Module({
   //permite usar prismaService dentro de salesService
-  imports: [PrismaModule],
+  imports: [PrismaModule, PaymentsModule],
 
   //registar el servicio de ventas
   providers: [SalesService],

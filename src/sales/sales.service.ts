@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MockPayService } from '../payments/mock-pay.service';
  
 
 
@@ -9,6 +10,7 @@ export class SalesService {
     constructor(
         //permite usar prisma dentro del service
         private readonly prisma: PrismaService,
+        private readonly mockpay: MockPayService,
     ) {}
 
     async validarCaja(cashRegisterId: number) {
@@ -112,6 +114,19 @@ export class SalesService {
         (acumulado, item) => acumulado + item.subtotal,
         0,
     );
+
+    //si no es efectivo, simulamos el pago externo
+    if (createSaleDto.paymentMethod !== 'EFECTIVO') {
+    const pago = await this.mockpay.procesarPago(
+    total,
+    createSaleDto.paymentMethod,
+    );
+
+  if (!pago.aprobado) {
+    throw new BadRequestException('Pago rechazado');
+  }
+    }
+
 
     //iniciamos una transacción para que todos los cambios sean atómicos
     return this.prisma.$transaction(async (tx) => {

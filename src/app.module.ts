@@ -11,6 +11,7 @@ import { SalesModule } from './sales/sales.module';
 import { CustomersModule } from './customers/customers.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
+import { PaymentsModule } from './payments/payments.module';
 
 
 @Module({ //carga las variables del archivo .env y permite usarlas desde toda la aplicación
@@ -20,22 +21,15 @@ import { OrdersModule } from './orders/orders.module';
     }),
 
     AuthModule,
-
     PrismaModule,
-
     UsersModule,
-
     CategoriesModule,
-
     ProductsModule,
-
     SalesModule,
-
     CustomersModule,
-
     CartModule,
-
     OrdersModule, //módulo de autenticación
+    PaymentsModule,
   ],  
   controllers: [AppController],
   providers: [AppService],
