@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as bcrypt from "bcrypt";
@@ -31,46 +32,111 @@ async function main() {
     create: { name: "CLIENTE" },
   });
 
+ //actualizamos solamente las credenciales de los usuarios existentes
+  if (process.argv.includes("--solo-credenciales")) {
+    const cuentas = [
+      {
+        emailAnterior: "admin@gmail.com",
+        emailNuevo: "admin@mail.com",
+        password: "admin123",
+        roleId: adminRole.id,
+      },
+      {
+        emailAnterior: "cajero@gmail.com",
+        emailNuevo: "cajero@mail.com",
+        password: "cajero123",
+        roleId: cajeroRole.id,
+      },
+      {
+        emailAnterior: "cliente@gmail.com",
+        emailNuevo: "cliente@mail.com",
+        password: "cliente123",
+        roleId: clienteRole.id,
+      },
+    ];
+
+    const actualizaciones = [];
+
+    for (const cuenta of cuentas) {
+      const anterior = await prisma.user.findUnique({
+        where: { email: cuenta.emailAnterior },
+      });
+
+      const nuevo = await prisma.user.findUnique({
+        where: { email: cuenta.emailNuevo },
+      });
+
+      if (anterior && nuevo && anterior.id !== nuevo.id) {
+        throw new Error(`El correo ${cuenta.emailNuevo} ya pertenece a otro usuario.`);
+      }
+
+      const usuario = anterior ?? nuevo;
+
+      if (!usuario) {
+        throw new Error(`No se encontró el usuario ${cuenta.emailAnterior}.`);
+      }
+
+      const passwordHash = await bcrypt.hash(cuenta.password, 10);
+
+      actualizaciones.push(
+        prisma.user.update({
+          where: { id: usuario.id },
+          data: {
+            email: cuenta.emailNuevo,
+            passwordHash,
+            roleId: cuenta.roleId,
+          },
+        }),
+      );
+    }
+
+    await prisma.$transaction(actualizaciones);
+
+    console.log("Las tres credenciales se actualizaron correctamente.");
+    return;
+  }
+
+
   //contraseñas
-  const adminPassword = await bcrypt.hash("Admin1234!", 10);
-  const cajeroPassword = await bcrypt.hash("Cajero1234!", 10);
-  const clientePassword = await bcrypt.hash("Cliente1234!", 10);
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  const cajeroPassword = await bcrypt.hash("cajero123", 10);
+  const clientePassword = await bcrypt.hash("cliente123", 10);
 
   //usuarios
   const admin = await prisma.user.upsert({
-    where: { email: "admin@gmail.com" },
+    where: { email: "admin@mail.com" },
     update: {passwordHash: adminPassword,
   roleId: adminRole.id,
 },
     create: {
       name: "Administrador",
-      email: "admin@gmail.com",
+      email: "admin@mail.com",
       passwordHash: adminPassword,
       roleId: adminRole.id,
     },
   });
 
   const cajero = await prisma.user.upsert({
-    where: { email: "cajero@gmail.com" },
+    where: { email: "cajero@mail.com" },
     update: {passwordHash: cajeroPassword,
   roleId: cajeroRole.id,
 },
     create: {
       name: "Cajero Demo",
-      email: "cajero@gmail.com",
+      email: "cajero@mail.com",
       passwordHash: cajeroPassword,
       roleId: cajeroRole.id,
     },
   });
 
   const cliente = await prisma.user.upsert({
-    where: { email: "cliente@gmail.com" },
+    where: { email: "cliente@mail.com" },
     update: {passwordHash: clientePassword,
   roleId: clienteRole.id,
 },
     create: {
       name: "Cliente Demo",
-      email: "cliente@gmail.com",
+      email: "cliente@mail.com",
       passwordHash: clientePassword,
       roleId: clienteRole.id,
     },
@@ -365,9 +431,9 @@ async function main() {
   console.log("Seed completado correctamente");
   console.log("");
   console.log("Usuarios de demostración:");
-  console.log("ADMIN   → admin@gmail.com / Admin1234!");
-  console.log("CAJERO  → cajero@gmail.com / Cajero1234!");
-  console.log("CLIENTE → cliente@gmail.com / Cliente1234!");
+  console.log("ADMIN   → admin@mail.com / admin123");
+  console.log("CAJERO  → cajero@mail.com / cajero123");
+  console.log("CLIENTE → cliente@mail.com / cliente123");
   console.log("");
   console.log(`Venta POS creada: #${sale.id}`);
   console.log(`Cliente: ${cliente.email}`);

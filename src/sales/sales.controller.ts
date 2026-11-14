@@ -1,19 +1,15 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
-import { SalesService } from "./sales.service"; 
+import { SalesService } from "./sales.service";
 import { CreateSaleDto } from "./dto/create-sale.dto/create-sale.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { Roles } from "../auth/decorators/roles.decorator";  
+import { Roles } from "../auth/decorators/roles.decorator";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse } from "@nestjs/swagger";
-
-
-
 
 @ApiBearerAuth()
 @Controller('sales')
 export class SalesController {
     constructor(
-        //permite usar salesService dentro del controller
         private readonly salesService: SalesService,
     ) {}
 
@@ -38,7 +34,6 @@ export class SalesController {
         description: 'El usuario no tiene permisos suficientes',
     })
     async obtenerVentas() {
-        //obtenemos el historial de ventas
         return this.salesService.obtenerVentas();
     }
 
@@ -66,11 +61,24 @@ export class SalesController {
         @Body() createSaleDto: CreateSaleDto,
         @Req() req: any,
     ) {
-        //el usuario sale del JWT, no del body
         const userId = req.user.sub;
-
-        //delegamos la lógica de la venta al service
         return this.salesService.crearVenta(createSaleDto, userId);
+    }
+
+    @Get('caja/actual')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('ADMIN', 'CAJERO')
+    @ApiOperation({
+        summary: 'Consultar caja abierta',
+        description: 'Obtiene la caja abierta del usuario autenticado',
+    })
+    @ApiResponse({
+        status: 200,
+        description: 'Caja abierta obtenida correctamente',
+    })
+    async obtenerCajaAbierta(@Req() req: any) {
+        const userId = req.user.sub;
+        return this.salesService.obtenerCajaAbierta(userId);
     }
 
     @Post('caja/abrir')
@@ -94,27 +102,23 @@ export class SalesController {
         description: 'El usuario no tiene permisos suficientes',
     })
     @ApiBody({
-    schema: {
-        type: 'object',
-        properties: {
-            openingAmount: {
-                type: 'number',
-                example: 10000,
-                description: 'Monto inicial disponible en la caja',
+        schema: {
+            type: 'object',
+            properties: {
+                openingAmount: {
+                    type: 'number',
+                    example: 10000,
+                    description: 'Monto inicial disponible en la caja',
+                },
             },
+            required: ['openingAmount'],
         },
-        required: ['openingAmount'],
-    },
     })
     async abrirCaja(
-
         @Body() body: { openingAmount: number },
         @Req() req: any,
     ) {
-        //el usuario sale del JWT
         const userId = req.user.sub;
-
-        //abrimos la caja con el monto inicial recibido
         return this.salesService.abrirCaja(
             userId,
             body.openingAmount,
@@ -142,34 +146,29 @@ export class SalesController {
         description: 'El usuario no tiene permisos suficientes',
     })
     @ApiBody({
-    schema: {
-        type: 'object',
-        properties: {
-            closingAmount: {
-                type: 'number',
-                example: 10000,
-                description: 'Monto de efectivo contado al cerrar la caja',
+        schema: {
+            type: 'object',
+            properties: {
+                closingAmount: {
+                    type: 'number',
+                    example: 10000,
+                    description: 'Monto de efectivo contado al cerrar la caja',
+                },
             },
+            required: ['closingAmount'],
         },
-        required: ['closingAmount'],
-    },
     })
     async cerrarCaja(
-
         @Body() body: { closingAmount: number },
         @Req() req: any,
     ) {
-        //el usuario sale del JWT
         const userId = req.user.sub;
-
-        //cerramos la caja y conciliamos el efectivo
         return this.salesService.cerrarCaja(
             userId,
             body.closingAmount,
         );
     }
 }
-
 
 
 

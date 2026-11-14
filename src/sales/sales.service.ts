@@ -303,6 +303,16 @@ export class SalesService {
         });
     }
     
+       //obtenemos la caja abierta del usuario
+    async obtenerCajaAbierta(userId: number) {
+        return this.prisma.cashRegister.findFirst({
+            where: {
+                userId,
+                status: 'ABIERTA',
+            },
+        });
+    }
+
 }
 
 

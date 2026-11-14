@@ -3,8 +3,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto/update-product.dto';
 
-
-
 @Injectable()
 export class ProductsService {
     constructor(
@@ -26,25 +24,28 @@ export class ProductsService {
         });
     }
 
-    async obtenerProductos(categoryId?: number) {
+    async obtenerProductos(category?: string) {
         //obtenemos solo los datos publicos de los productos
         return this.prisma.product.findMany({
             where: {
-                //solo mostramos productos que tienen stock
+                //mostramos solo productos con stock
                 stock: {
                     gt: 0,
                 },
-                //si se indica una categoría, también filtramos por ella
-            ...(categoryId
-                ? {
-                    categoryId: categoryId,
-                }
-                : {}),
+                //filtramos por nombre de categoria si se indica
+                ...(category
+                    ? {
+                        category: {
+                            name: category,
+                        },
+                    }
+                    : {}),
             },
             orderBy: {
                 name: 'asc',
             },
             select: {
+                //seleccionamos solo los datos publicos
                 id: true,
                 name: true,
                 description: true,

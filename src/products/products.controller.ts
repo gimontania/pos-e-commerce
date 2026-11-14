@@ -43,20 +43,18 @@ export class ProductsController {
     @Get()
     @ApiOperation({
         summary: 'Obtener productos',
-        description:
-            'Devuelve el catálogo de productos. Permite filtrar opcionalmente por categoría.',
+        description: 'Devuelve el catálogo de productos. Permite filtrar opcionalmente por nombre de categoría.',
     })
     @ApiResponse({
         status: 200,
         description: 'Lista de productos obtenida correctamente.',
     })
-    async obtenerProductos(@Query('category') categoryId?: string) {
-        //obtenemos los productos desde el service, opcionalmente filtrados por categoría
-        return this.productsService.obtenerProductos(
-            categoryId ? Number(categoryId) : undefined,
-        );
+    async obtenerProductos(@Query('category') category?: string) {
+        //obtenemos los productos, opcionalmente filtrados por categoria
+        return this.productsService.obtenerProductos(category);
     }
 
+    //admin y cajero pueden actualizar productos
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('ADMIN', 'CAJERO')
     @Patch(':id')
