@@ -5,12 +5,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const frontendUrl = process.env.FRONTEND_URL;
-
   app.enableCors({
     origin: [
       'http://localhost:5173',
-      ...(frontendUrl ? [frontendUrl] : []),
+      'https://pos-ecommerce-frontend.vercel.app',
     ],
   });
 
